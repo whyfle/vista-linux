@@ -1,4 +1,4 @@
-live-boot
+﻿live-boot
 live-config
 live-config-systemd
 systemd-sysv
@@ -10,7 +10,6 @@ curl
 ca-certificates
 plymouth
 plymouth-themes
-plymouth-label
 nano
 vim
 less
@@ -33,10 +32,8 @@ git
 build-essential
 pkg-config
 libssl-dev
-polkitd
-firmware-linux
-firmware-linux-nonfree
-firmware-misc-nonfree
+policykit-1
+linux-firmware
 x11-xserver-utils
 dconf-cli
 uuid-runtime
@@ -57,16 +54,15 @@ tmux
 htop
 nvidia-prime
 nvidia-detect
-glx-alternative-nvidia
+nvidia-utils
+nvidia-kernel-source
 mesa-utils
 broadcom-sta-dkms
 firmware-b43-installer
 firmware-b43legacy-installer
-macfanctld
 tlp
 tlp-rdw
 dkms
-linux-headers-amd64
+linux-headers-generic
 xserver-xorg-video-all
 xserver-xorg-input-all
-
