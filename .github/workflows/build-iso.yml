@@ -15,7 +15,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo add-apt-repository universe -y
+          sudo add-apt-repository restricted -y`nsudo add-apt-repository universe -y`nsudo add-apt-repository multiverse -y
           sudo add-apt-repository multiverse -y
           sudo apt-get update
           sudo apt-get install -y live-build debootstrap git xorriso syslinux isolinux
@@ -43,3 +43,4 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

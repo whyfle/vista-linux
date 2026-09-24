@@ -52,17 +52,3 @@ btrfs-progs
 xfsprogs
 tmux
 htop
-nvidia-prime
-nvidia-detect
-nvidia-utils
-nvidia-kernel-source
-mesa-utils
-broadcom-sta-dkms
-firmware-b43-installer
-firmware-b43legacy-installer
-tlp
-tlp-rdw
-dkms
-linux-headers-generic
-xserver-xorg-video-all
-xserver-xorg-input-all
