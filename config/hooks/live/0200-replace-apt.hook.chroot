@@ -1,0 +1,55 @@
+#!/bin/bash
+set -e
+
+echo "I: Replacing apt / apt-get with Vista wrapper …"
+
+# ── Move real binaries out of the way ────────────────────────────
+for bin in apt apt-get; do
+    src="/usr/bin/$bin"
+    if [ -f "$src" ] && [ ! -L "$src" ]; then
+        mv "$src" "${src}.real"
+    fi
+done
+
+# ── apt wrapper ──────────────────────────────────────────────────
+cat > /usr/bin/apt << 'WRAPPER'
+#!/bin/bash
+echo -e "\033[1;35m╔══════════════════════════════════════════════════════════════╗\033[0m"
+echo -e "\033[1;35m║  Vista Linux uses \033[1;32mvista\033[1;35m as its package manager.              ║\033[0m"
+echo -e "\033[1;35m╚══════════════════════════════════════════════════════════════╝\033[0m"
+echo ""
+echo -e "  Try:  \033[1;32mvista install <package>\033[0m"
+echo -e "        \033[1;32mvista search  <query>\033[0m"
+echo -e "        \033[1;32mvista sys-info\033[0m"
+echo ""
+read -p "Run the original apt command anyway? [y/N] " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    exec /usr/bin/apt.real "$@"
+else
+    exit 0
+fi
+WRAPPER
+chmod +x /usr/bin/apt
+
+# ── apt-get wrapper (references apt-get.real) ────────────────────
+cat > /usr/bin/apt-get << 'WRAPPER'
+#!/bin/bash
+echo -e "\033[1;35m╔══════════════════════════════════════════════════════════════╗\033[0m"
+echo -e "\033[1;35m║  Vista Linux uses \033[1;32mvista\033[1;35m as its package manager.              ║\033[0m"
+echo -e "\033[1;35m╚══════════════════════════════════════════════════════════════╝\033[0m"
+echo ""
+echo -e "  Try:  \033[1;32mvista install <package>\033[0m"
+echo -e "        \033[1;32mvista search  <query>\033[0m"
+echo ""
+read -p "Run the original apt-get command anyway? [y/N] " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    exec /usr/bin/apt-get.real "$@"
+else
+    exit 0
+fi
+WRAPPER
+chmod +x /usr/bin/apt-get
+
+echo "I: apt / apt-get wrappers installed."

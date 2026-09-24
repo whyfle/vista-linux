@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+
+echo "I: Configuring Plymouth boot splash..."
+
+# Copy theme to system themes directory
+THEME_DIR="/usr/share/plymouth/themes/vista-logo"
+mkdir -p "$THEME_DIR"
+cp /usr/share/vista/plymouth/* "$THEME_DIR/" 2>/dev/null || true
+
+# Check if plymouth-set-default-theme is present and configure it
+if command -v plymouth-set-default-theme >/dev/null 2>&1; then
+    plymouth-set-default-theme vista-logo || true
+fi
+
+# Update initramfs if available to include the new splash
+if command -v update-initramfs >/dev/null 2>&1; then
+    update-initramfs -u || true
+fi
+
+echo "I: Plymouth boot splash configured."

@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Vista Logo
+Description=Official Vista Linux Eye Boot Splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/vista-logo
+ScriptFile=/usr/share/plymouth/themes/vista-logo/vista-logo.script

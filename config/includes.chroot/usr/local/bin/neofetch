@@ -1,0 +1,191 @@
+#!/usr/bin/env python3
+"""
+Vista Linux System Fetch Tool (vista-fetch / neofetch)
+─────────────────────────────────────────────────────
+Custom fastfetch/neofetch script tailored for Vista Linux.
+Shows the custom ASCII logo, OS, kernel, desktop environment,
+package manager stats (powered by Vista), and system resource usage.
+"""
+
+import os
+import platform
+import shutil
+import subprocess
+import sys
+
+# Ensure UTF-8 output even in limited terminals
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+# ── ANSI Colors ────────────────────────────────────────────────────────
+RESET   = "\033[0m"
+BOLD    = "\033[1m"
+DIM     = "\033[2m"
+ITALIC  = "\033[3m"
+
+# Palette
+PURPLE  = "\033[38;2;168;85;247m"
+CYAN    = "\033[38;2;56;189;248m"
+BLUE    = "\033[38;2;96;165;250m"
+GREEN   = "\033[38;2;52;211;153m"
+PINK    = "\033[38;2;244;114;182m"
+YELLOW  = "\033[38;2;251;191;36m"
+WHITE   = "\033[38;2;248;250;252m"
+GRAY    = "\033[38;2;100;116;139m"
+
+
+# ── Vista Eye Logo (from https://github.com/whyfle/vista/raw/main/assets/vista-logo.png) ──
+LOGO_LINES = [
+    f"{PURPLE}  ####*************###*#*+=-:..: {RESET}",
+    f"{PURPLE} ******+++===+++++***#####**+=+  {RESET}",
+    f"{PURPLE} +++===----:------=-=++***#####  {RESET}",
+    f"{PURPLE} =-----==+*********++====+*####  {RESET}",
+    f"{BLUE} --==++**=--:.........:::-+****  {RESET}",
+    f"{BLUE} ++**+=:.:.  ..:.    .:   :=**#  {RESET}",
+    f"{CYAN} **+-:-+**:..{WHITE}#@#{CYAN}. ... -+-  .:=*  {RESET}",
+    f"{CYAN} +=:-*{WHITE}@@@*{CYAN}.::=*:   .: :%%=.  :=  {RESET}",
+    f"{CYAN} ++*%{WHITE}@@@@{CYAN}*.::     .::.:%@*--+**  {RESET}",
+    f"{BLUE} ***##%%@#..-:....::. =@%*=*@@@  {RESET}",
+    f"{BLUE} *##****%%=..:::::...*@%##%@@@@  {RESET}",
+    f"{GRAY} *####*****+=-:::::-*#**%%@@@@@  {RESET}",
+    f"{GRAY} *#####******+++++==+=#%%%@@@@@  {RESET}",
+    f"{GRAY} ##############******#%@@@@@@@@  {RESET}",
+    f"{GRAY} ##*#############%%%%%%@@@@@@@@  {RESET}",
+    f"{GRAY} ##***###%%#%%%%%%%%%@@@@@@@@@@  {RESET}",
+]
+
+
+def run(cmd):
+    try:
+        return subprocess.check_output(cmd, shell=True, stderr=subprocess.DEVNULL).decode('utf-8').strip()
+    except Exception:
+        return ""
+
+def get_uptime():
+    try:
+        with open("/proc/uptime", "r") as f:
+            seconds = float(f.readline().split()[0])
+        mins, sec = divmod(seconds, 60)
+        hrs, mins = divmod(mins, 60)
+        days, hrs = divmod(hrs, 24)
+        parts = []
+        if days: parts.append(f"{int(days)}d")
+        if hrs: parts.append(f"{int(hrs)}h")
+        if mins: parts.append(f"{int(mins)}m")
+        return " ".join(parts) if parts else "< 1m"
+    except Exception:
+        return "unknown"
+
+def get_packages():
+    # Count installed dpkg packages handled by vista
+    try:
+        count = run("dpkg-query -f '.\n' -W | wc -l")
+        if count:
+            return f"{count} (vista/dpkg)"
+    except Exception:
+        pass
+    return "unknown (vista)"
+
+def get_memory():
+    try:
+        with open("/proc/meminfo", "r") as f:
+            lines = f.readlines()
+        mem = {}
+        for line in lines:
+            parts = line.split(":")
+            if len(parts) == 2:
+                mem[parts[0].strip()] = int(parts[1].split()[0])
+        total = mem.get("MemTotal", 0) // 1024
+        avail = mem.get("MemAvailable", 0) // 1024
+        used = total - avail
+        return f"{used} MiB / {total} MiB"
+    except Exception:
+        return "unknown"
+
+def get_de():
+    de = os.environ.get("XDG_CURRENT_DESKTOP")
+    if not de:
+        de = os.environ.get("DESKTOP_SESSION")
+    if de:
+        if "GNOME" in de.upper():
+            return "GNOME (with Dash to Dock)"
+        elif "KDE" in de.upper() or "PLASMA" in de.upper():
+            return "KDE Plasma (OLED Pure Black)"
+        return de
+    return "Terminal / Headless"
+
+def get_wm():
+    wm = run("wmctrl -m | grep 'Name:' | cut -d' ' -f2")
+    if wm:
+        return wm
+    if "GNOME" in os.environ.get("XDG_CURRENT_DESKTOP", ""):
+        return "Mutter"
+    if "KDE" in os.environ.get("XDG_CURRENT_DESKTOP", ""):
+        return "KWin"
+    return "Unknown"
+
+def get_terminal():
+    term = os.environ.get("TERM_PROGRAM") or os.environ.get("TERM")
+    return term if term else "Console"
+
+def get_cpu():
+    try:
+        with open("/proc/cpuinfo", "r") as f:
+            for line in f:
+                if "model name" in line:
+                    return line.split(":")[1].strip().split("@")[0].strip()
+    except Exception:
+        pass
+    return platform.processor() or "Generic x86_64"
+
+def get_gpu():
+    gpu = run("lspci | grep -iE 'vga|3d|display' | head -n 1 | cut -d':' -f3")
+    return gpu.strip() if gpu else "Integrated / Virtual"
+
+def main():
+    user = os.environ.get("USER", "vista")
+    node = platform.node() or "vista"
+    
+    header = f"{PURPLE}{BOLD}{user}{RESET}@{CYAN}{BOLD}{node}{RESET}"
+    divider = f"{GRAY}{'─' * (len(user) + len(node) + 1)}{RESET}"
+    
+    info_items = [
+        (f"{PURPLE}OS{RESET}", "Vista Linux (Debian Sid rolling) x86_64"),
+        (f"{PURPLE}Host{RESET}", run("cat /sys/devices/virtual/dmi/id/product_name") or "Standard PC"),
+        (f"{PURPLE}Kernel{RESET}", platform.release()),
+        (f"{PURPLE}Uptime{RESET}", get_uptime()),
+        (f"{PURPLE}Packages{RESET}", get_packages()),
+        (f"{PURPLE}Shell{RESET}", os.path.basename(os.environ.get("SHELL", "/bin/bash"))),
+        (f"{CYAN}DE{RESET}", get_de()),
+        (f"{CYAN}WM{RESET}", get_wm()),
+        (f"{CYAN}Terminal{RESET}", get_terminal()),
+        (f"{GREEN}CPU{RESET}", get_cpu()),
+        (f"{GREEN}GPU{RESET}", get_gpu()),
+        (f"{YELLOW}Memory{RESET}", get_memory()),
+    ]
+    
+    # 8-color test blocks
+    color_blocks = "".join(f"\033[48;5;{c}m   \033[0m" for c in [0, 4, 2, 6, 1, 5, 3, 7])
+    bright_blocks = "".join(f"\033[48;5;{c}m   \033[0m" for c in [8, 12, 10, 14, 9, 13, 11, 15])
+    
+    lines_right = [header, divider]
+    for label, val in info_items:
+        lines_right.append(f"{label.ljust(18)} {val}")
+    lines_right.append("")
+    lines_right.append(color_blocks)
+    lines_right.append(bright_blocks)
+    
+    max_lines = max(len(LOGO_LINES), len(lines_right))
+    
+    print()
+    for i in range(max_lines):
+        left = LOGO_LINES[i] if i < len(LOGO_LINES) else " " * 33
+        right = lines_right[i] if i < len(lines_right) else ""
+        print(f" {left}   {right}")
+    print()
+
+if __name__ == "__main__":
+    main()

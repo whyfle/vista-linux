@@ -1,0 +1,39 @@
+# Vista Linux Plymouth Boot Splash Script
+# Pure OLED black background with smooth pulsing/centered Vista eye logo
+
+# Pure black background
+Window.SetBackgroundTopColor(0.0, 0.0, 0.0);
+Window.SetBackgroundBottomColor(0.0, 0.0, 0.0);
+
+logo.image = Image("vista-logo-256.png");
+logo.sprite = Sprite(logo.image);
+
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+
+logo_x = (screen_width - logo.image.GetWidth()) / 2;
+logo_y = (screen_height - logo.image.GetHeight()) / 2 - 40;
+
+logo.sprite.SetPosition(logo_x, logo_y, 10);
+logo.sprite.SetOpacity(1.0);
+
+# Progress glow / pulse effect
+time = 0;
+fun refresh_callback() {
+    time += 0.03;
+    opacity = 0.75 + 0.25 * Math.Sin(time);
+    logo.sprite.SetOpacity(opacity);
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);
+
+# Message handling during boot
+message_sprite = Sprite();
+message_sprite.SetPosition(screen_width / 2 - 100, logo_y + logo.image.GetHeight() + 40, 10);
+
+fun message_callback(text) {
+    my_image = Image.Text(text, 0.7, 0.7, 0.7);
+    message_sprite.SetImage(my_image);
+}
+
+Plymouth.SetMessageFunction(message_callback);

@@ -1,0 +1,36 @@
+#!/bin/bash
+set -e
+
+echo "I: Installing Vista Package Manager..."
+
+# Install Rust toolchain
+export RUSTUP_HOME=/tmp/rustup
+export CARGO_HOME=/tmp/cargo
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+source $CARGO_HOME/env
+
+# Clone and build Vista
+cd /tmp
+git clone https://github.com/whyfle/vista.git
+cd vista
+cargo build --release
+
+# Install Vista
+cp target/release/vista /usr/local/bin/vista
+chmod +x /usr/local/bin/vista
+
+# Clean up
+cd /
+rm -rf /tmp/vista
+rm -rf /tmp/rustup
+rm -rf /tmp/cargo
+
+# Create config
+mkdir -p /etc/vista
+cat > /etc/vista/config.toml << 'EOF'
+[vista]
+backend = "apt"
+colors = true
+EOF
+
+echo "I: Vista Package Manager installed."

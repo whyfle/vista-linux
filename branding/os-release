@@ -1,0 +1,10 @@
+PRETTY_NAME="Vista Linux (Sid)"
+NAME="Vista Linux"
+VERSION_ID="rolling"
+VERSION="rolling"
+VERSION_CODENAME=sid
+ID=vista
+ID_LIKE=debian
+HOME_URL="https://github.com/whyfle/vista"
+SUPPORT_URL="https://github.com/whyfle/vista/issues"
+BUG_REPORT_URL="https://github.com/whyfle/vista/issues"

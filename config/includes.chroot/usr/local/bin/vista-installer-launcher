@@ -1,0 +1,13 @@
+#!/bin/bash
+# Wrapper to launch the Vista Installer inside whatever terminal emulator is available
+if command -v x-terminal-emulator >/dev/null 2>&1; then
+    exec x-terminal-emulator -e sudo /usr/local/bin/vista-installer
+elif command -v konsole >/dev/null 2>&1; then
+    exec konsole -e sudo /usr/local/bin/vista-installer
+elif command -v gnome-terminal >/dev/null 2>&1; then
+    exec gnome-terminal -- sudo /usr/local/bin/vista-installer
+elif command -v xterm >/dev/null 2>&1; then
+    exec xterm -e sudo /usr/local/bin/vista-installer
+else
+    sudo /usr/local/bin/vista-installer
+fi

@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e
+
+lb config noauto \
+    --distribution sid \
+    --architecture amd64 \
+    --archive-areas "main contrib non-free non-free-firmware" \
+    --binary-images iso-hybrid \
+    --iso-application "Vista Linux Live" \
+    --iso-publisher "Vista Linux" \
+    --iso-volume "VISTA_LIVE" \
+    --bootappend-live "boot=live components quiet splash plymouth.ignore-serial-consoles vt.handoff=7" \
+    --linux-packages "linux-image" \
+    "${@}"

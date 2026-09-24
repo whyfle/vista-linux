@@ -1,0 +1,106 @@
+#!/bin/bash
+set -e
+
+echo "I: Configuring NVIDIA Hybrid GPU & Hardware Detection..."
+
+# 1. Provide custom PRIME offload wrappers
+mkdir -p /usr/local/bin
+cat > /usr/local/bin/prime-run << 'EOF'
+#!/bin/bash
+# Universal NVIDIA PRIME Offload Wrapper for Vista Linux
+export __NV_PRIME_RENDER_OFFLOAD=1
+export __GLX_VENDOR_LIBRARY_NAME=nvidia
+export __VK_LAYER_NV_optimus=NVIDIA_only
+exec "$@"
+EOF
+chmod +x /usr/local/bin/prime-run
+
+# 2. Add an auto-detection script for legacy Apple iMac & hybrid GPUs
+cat > /usr/local/bin/vista-gpu-setup << 'EOF'
+#!/bin/bash
+set -e
+
+echo "=========================================================="
+echo "          Vista Linux GPU & Hardware Setup"
+echo "=========================================================="
+
+GPUS=$(lspci -nn | grep -iE 'vga|3d|display' || true)
+echo "Detected GPUs:"
+echo "$GPUS"
+echo ""
+
+# Check for NVIDIA
+if echo "$GPUS" | grep -iq 'nvidia'; then
+    echo "[*] NVIDIA GPU identified."
+    # Check if legacy GeForce 9400M / GT 120 / GT 130 / 8800 (Common 2009 iMac GPUs)
+    if echo "$GPUS" | grep -iE '086[0-9]|064[0-9]|065[0-9]|061[0-9]|9400|GT 120|GT 130'; then
+        echo "[*] Legacy Tesla/G80/G90 series detected (iMac 2009 class)."
+        echo "[*] Recommended driver: Nouveau (open-source kernel modesetting with GL 3.3) or nvidia-legacy-340xx."
+        echo "[*] For modern Debian Sid kernels, Nouveau provides out-of-the-box Wayland/X11 acceleration."
+    else
+        echo "[*] Modern NVIDIA GPU. Checking driver status..."
+        if command -v nvidia-detect >/dev/null 2>&1; then
+            nvidia-detect || true
+        fi
+    fi
+else
+    echo "[*] Intel/AMD/Other GPU detected."
+fi
+
+# Check for Apple hardware
+if [ -d /sys/devices/virtual/dmi/id ]; then
+    SYS_VENDOR=$(cat /sys/devices/virtual/dmi/id/sys_vendor 2>/dev/null || true)
+    PROD_NAME=$(cat /sys/devices/virtual/dmi/id/product_name 2>/dev/null || true)
+    if [[ "$SYS_VENDOR" =~ "Apple" ]] || [[ "$PROD_NAME" =~ "iMac" ]]; then
+        echo ""
+        echo "[*] Apple hardware detected: $PROD_NAME"
+        echo "[*] Enabling macfanctld daemon for thermal management..."
+        systemctl enable macfanctld 2>/dev/null || true
+        systemctl start macfanctld 2>/dev/null || true
+    fi
+fi
+EOF
+chmod +x /usr/local/bin/vista-gpu-setup
+
+# 3. Create X11 PRIME / Hybrid GPU configuration
+mkdir -p /etc/X11/xorg.conf.d
+cat > /etc/X11/xorg.conf.d/10-hybrid-gpu.conf << 'EOF'
+# Vista Linux Hybrid Graphics Configuration
+Section "ServerLayout"
+    Identifier "layout"
+    Screen 0 "intel"
+    Inactive "nvidia"
+    Option "AllowNVIDIAGPUScreens"
+EndSection
+
+Section "Device"
+    Identifier "intel"
+    Driver "modesetting"
+    BusID "PCI:0:2:0"
+EndSection
+
+Section "Screen"
+    Identifier "intel"
+    Device "intel"
+EndScreen
+
+Section "Device"
+    Identifier "nvidia"
+    Driver "nvidia"
+EndSection
+EOF
+
+# 4. Modprobe configuration for dynamic power management & hybrid GPU power down
+mkdir -p /etc/modprobe.d
+cat > /etc/modprobe.d/nvidia-power-management.conf << 'EOF'
+# Dynamic Power Management for NVIDIA Hybrid GPUs
+options nvidia "NVreg_DynamicPowerManagement=0x02"
+options nvidia-drm modeset=1
+EOF
+
+# 5. Enable TLP for battery/power optimization on mobile and hybrid machines
+if command -v systemctl >/dev/null 2>&1; then
+    systemctl enable tlp 2>/dev/null || true
+fi
+
+echo "I: NVIDIA Hybrid GPU configuration installed."

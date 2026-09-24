@@ -1,0 +1,92 @@
+#!/bin/bash
+set -e
+
+echo "I: Configuring GNOME desktop environment …"
+
+# ── Enable GDM ──────────────────────────────────────────────────
+systemctl enable gdm3 2>/dev/null || true
+
+# ── dconf system-wide profile ────────────────────────────────────
+mkdir -p /etc/dconf/profile
+cat > /etc/dconf/profile/user << 'EOF'
+user-db:user
+system-db:local
+EOF
+
+# ── Vista GNOME defaults ────────────────────────────────────────
+mkdir -p /etc/dconf/db/local.d
+cat > /etc/dconf/db/local.d/00-vista-defaults << 'EOF'
+[org/gnome/desktop/interface]
+color-scheme='prefer-dark'
+gtk-theme='Adwaita-dark'
+clock-show-weekday=true
+font-antialiasing='rgba'
+
+[org/gnome/desktop/wm/preferences]
+button-layout='appmenu:minimize,maximize,close'
+
+[org/gnome/shell]
+enabled-extensions=['dash-to-dock@micxgx.gmail.com']
+favorite-apps=['org.gnome.Terminal.desktop', 'org.gnome.Nautilus.desktop', 'firefox-esr.desktop', 'vista-installer.desktop']
+
+[org/gnome/shell/extensions/dash-to-dock]
+dock-position='BOTTOM'
+dash-max-icon-size=48
+extend-height=false
+dock-fixed=true
+transparency-mode='DYNAMIC'
+custom-theme-shrink=true
+show-trash=false
+show-mounts=false
+apply-custom-theme=true
+running-indicator-style='DOTS'
+
+[org/gnome/desktop/background]
+primary-color='#1a1a2e'
+
+[org/gnome/desktop/screensaver]
+primary-color='#1a1a2e'
+
+[org/gnome/desktop/peripherals/touchpad]
+tap-to-click=true
+natural-scroll=true
+
+[org/gnome/settings-daemon/plugins/power]
+sleep-inactive-ac-type='nothing'
+
+[org/gnome/terminal/legacy]
+theme-variant='dark'
+EOF
+
+# ── Lock certain settings (prevent overwrite) ────────────────────
+mkdir -p /etc/dconf/db/local.d/locks
+cat > /etc/dconf/db/local.d/locks/vista << 'EOF'
+/org/gnome/shell/enabled-extensions
+EOF
+
+# ── Rebuild dconf database ──────────────────────────────────────
+dconf update
+
+# ── GDM branding ────────────────────────────────────────────────
+# Set GDM to use the same dark theme
+mkdir -p /etc/dconf/db/gdm.d
+cat > /etc/dconf/db/gdm.d/00-vista << 'EOF'
+[org/gnome/desktop/interface]
+color-scheme='prefer-dark'
+gtk-theme='Adwaita-dark'
+
+[org/gnome/login-screen]
+banner-message-enable=true
+banner-message-text='Welcome to Vista Linux'
+EOF
+
+mkdir -p /etc/dconf/profile
+cat > /etc/dconf/profile/gdm << 'EOF'
+user-db:user
+system-db:gdm
+file-db:/usr/share/gdm/greeter-dconf-defaults
+EOF
+
+dconf update
+
+echo "I: GNOME configuration complete."

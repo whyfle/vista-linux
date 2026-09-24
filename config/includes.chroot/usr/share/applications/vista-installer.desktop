@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Install Vista Linux
+GenericName=OS Installer
+Comment=Install Vista Linux to your hard drive
+Exec=/usr/local/bin/vista-installer-launcher
+Icon=system-software-install
+Terminal=false
+Type=Application
+Categories=System;
+Keywords=install;installer;setup;
+StartupNotify=true
