@@ -1,4 +1,4 @@
-﻿name: Build Vista Linux ISO
+name: Build Vista Linux ISO
 
 on:
   push:
