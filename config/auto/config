@@ -3,9 +3,8 @@
 set -e
 
 lb config noauto \
-    --distribution sid \
-    --architecture amd64 \
-    --archive-areas "main contrib non-free non-free-firmware" \
+    --distribution noble \
+    --archive-areas "main restricted universe multiverse" \
     --binary-images iso-hybrid \
     --iso-application "Vista Linux Live" \
     --iso-publisher "Vista Linux" \

@@ -69,7 +69,7 @@ cp branding/grub-splash.png config/includes.chroot/boot/grub/grub-splash.png 2>/
 
 
 log "Running lb config …"
-lb config --distribution sid --architecture amd64 --archive-areas "main contrib non-free non-free-firmware" --binary-images iso-hybrid --iso-application "Vista Linux Live" --iso-publisher "Vista Linux" --iso-volume "VISTA_LIVE" --bootappend-live "boot=live components quiet splash plymouth.ignore-serial-consoles vt.handoff=7" --linux-packages "linux-image"
+lb config --distribution noble --architecture amd64 --archive-areas "main restricted universe multiverse" --binary-images iso-hybrid --iso-application "Vista Linux Live" --iso-publisher "Vista Linux" --iso-volume "VISTA_LIVE" --bootappend-live "boot=live components quiet splash plymouth.ignore-serial-consoles vt.handoff=7" --linux-packages "linux-image"
 
 # ------------------------------------------------------------------
 # Build
