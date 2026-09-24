@@ -15,7 +15,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y live-build debootstrap git xorriso syslinux isolinux
+          sudo apt-get install -y live-build debootstrap git xorriso syslinux isolinux debian-archive-keyring
+          sudo apt-get install -y debian-ports-archive-keyring || true
 
       - name: Build Vista Linux ISO
         run: |
